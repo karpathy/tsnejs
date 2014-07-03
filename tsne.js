@@ -76,8 +76,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
     var D = x1.length;
     var d = 0;
     for(var i=0;i<D;i++) { 
-      x1i = x1[i];
-      x2i = x2[i];
+      var x1i = x1[i];
+      var x2i = x2[i];
       d += (x1i-x2i)*(x1i-x2i);
     }
     return d;
