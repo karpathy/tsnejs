@@ -28,7 +28,7 @@ And then here is some example code:
     var dists = [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.1, 1.0]];
     tsne.initDataDist(dists);
 
-    for(var k = 0; k &lt 500; k++) {
+    for(var k = 0; k < 500; k++) {
       tsne.step(); // every time you call this, solution gets better
     }
 
