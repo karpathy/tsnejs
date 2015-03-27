@@ -36,5 +36,11 @@ And then here is some example code:
 
 The data can be passed to tSNEJS as a set of high-dimensional points using the `tsne.initDataRaw(X)` function, where X is an array of arrays (high-dimensional points that need to be embedded). The algorithm computes the Gaussian kernel over these points and then finds the appropriate embedding.
 
+## Web Demos
+There are two web interfaces to this library that we are aware of:
+
+- By Andrej, [here](http://cs.stanford.edu/people/karpathy/tsnejs/csvdemo.html).
+- By Laurens, [here](http://homepage.tudelft.nl/19j49/tsnejs/), which takes data in different format and can also use Google Spreadsheet input.
+
 ## About
 Send questions to [@karpathy](https://twitter.com/karpathy).
