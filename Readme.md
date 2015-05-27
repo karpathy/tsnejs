@@ -44,3 +44,8 @@ There are two web interfaces to this library that we are aware of:
 
 ## About
 Send questions to [@karpathy](https://twitter.com/karpathy).
+
+## License
+
+MIT
+
