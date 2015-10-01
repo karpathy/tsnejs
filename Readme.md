@@ -8,6 +8,8 @@ t-SNE is a visualization algorithm that embeds things in 2 or 3 dimensions. If y
 ## Online demo
 The main project website has a [live example](http://cs.stanford.edu/people/karpathy/tsnejs/) and more description.
 
+There is also the [t-SNE CSV demo](http://cs.stanford.edu/people/karpathy/tsnejs/csvdemo.html) that allows you to simply paste CSV data into a textbox and tSNEJS computes and visualizes the embedding on the fly (no coding needed).
+
 ## Research Paper
 The algorithm was originally described in this paper:
 
@@ -21,18 +23,25 @@ You can find the PDF [here](http://jmlr.csail.mit.edu/papers/volume9/vandermaate
 Import tsne.js into your document: `<script src="tsne.js"></script>`
 And then here is some example code:
 
-    var opt = {epsilon: 10}; // epsilon is learning rate (10 = default)
-    var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
+```javascript
 
-    // initialize data. Here we have 3 points and some example pairwise dissimilarities
-    var dists = [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.1, 1.0]];
-    tsne.initDataDist(dists);
+var opt = {}
+opt.epsilon = 10; // epsilon is learning rate (10 = default)
+opt.perplexity = 30; // roughly how many neighbors each point influences (30 = default)
+opt.dim = 2; // dimensionality of the embedding (2 = default)
 
-    for(var k = 0; k < 500; k++) {
-      tsne.step(); // every time you call this, solution gets better
-    }
+var tsne = new tsnejs.tSNE(opt); // create a tSNE instance
 
-    var Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
+// initialize data. Here we have 3 points and some example pairwise dissimilarities
+var dists = [[1.0, 0.1, 0.2], [0.1, 1.0, 0.3], [0.2, 0.1, 1.0]];
+tsne.initDataDist(dists);
+
+for(var k = 0; k < 500; k++) {
+  tsne.step(); // every time you call this, solution gets better
+}
+
+var Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
+```
 
 The data can be passed to tSNEJS as a set of high-dimensional points using the `tsne.initDataRaw(X)` function, where X is an array of arrays (high-dimensional points that need to be embedded). The algorithm computes the Gaussian kernel over these points and then finds the appropriate embedding.
 
