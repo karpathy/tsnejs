@@ -254,7 +254,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
           // compute gain update
           var newgain = sign(gid) === sign(sid) ? gainid * 0.8 : gainid + 0.2;
-          if(gainid < 0.01) gainid = 0.01; // clamp
+          if(newgain < 0.01) newgain = 0.01; // clamp
           this.gains[i][d] = newgain; // store for next turn
 
           // compute momentum step direction
