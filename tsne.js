@@ -22,9 +22,9 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
   var return_v = false;
   var v_val = 0.0;
   var gaussRandom = function() {
-    if(return_v) { 
+    if(return_v) {
       return_v = false;
-      return v_val; 
+      return v_val;
     }
     var u = 2*Math.random()-1;
     var v = 2*Math.random()-1;
@@ -45,7 +45,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
     if(typeof ArrayBuffer === 'undefined') {
       // lacking browser support
       var arr = new Array(n);
-      for(var i=0;i<n;i++) { arr[i]= 0; }
+      for(var i=0;i<n;++i) { arr[i]= 0; }
       return arr;
     } else {
       return new Float64Array(n); // typed arrays are faster
@@ -56,17 +56,17 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
   // or with value s, if provided
   var randn2d = function(n,d,s) {
     var uses = typeof s !== 'undefined';
-    var x = [];
-    for(var i=0;i<n;i++) {
-      var xhere = [];
-      for(var j=0;j<d;j++) { 
+    var x = new Array(n);
+    for(var i=0;i<n;++i) {
+      var xhere = zeros(d);
+      for(var j=0;j<d;++j) {
         if(uses) {
-          xhere.push(s); 
+          xhere[j] = s;
         } else {
-          xhere.push(randn(0.0, 1e-4)); 
+          xhere[j] = randn(0.0, 1e-4);
         }
       }
-      x.push(xhere);
+      x[i] = xhere;
     }
     return x;
   }
@@ -75,7 +75,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
   var L2 = function(x1, x2) {
     var D = x1.length;
     var d = 0;
-    for(var i=0;i<D;i++) { 
+    for(var i=0;i<D;++i) {
       var x1i = x1[i];
       var x2i = x2[i];
       d += (x1i-x2i)*(x1i-x2i);
@@ -87,8 +87,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
   var xtod = function(X) {
     var N = X.length;
     var dist = zeros(N * N); // allocate contiguous array
-    for(var i=0;i<N;i++) {
-      for(var j=i+1;j<N;j++) {
+    for(var i=0;i<N;++i) {
+      for(var j=i+1;j<N;++j) {
         var d = L2(X[i], X[j]);
         dist[i*N+j] = d;
         dist[j*N+i] = d;
@@ -106,7 +106,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
     var P = zeros(N * N); // temporary probability matrix
 
     var prow = zeros(N); // a temporary storage compartment
-    for(var i=0;i<N;i++) {
+    for(var i=0;i<N;++i) {
       var betamin = -Infinity;
       var betamax = Infinity;
       var beta = 1; // initial value of precision
@@ -121,7 +121,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
         // compute entropy and kernel row with beta precision
         var psum = 0.0;
-        for(var j=0;j<N;j++) {
+        for(var j=0;j<N;++j) {
           var pj = Math.exp(- D[i*N+j] * beta);
           if(i===j) { pj = 0; } // we dont care about diagonals
           prow[j] = pj;
@@ -129,7 +129,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
         }
         // normalize p and compute entropy
         var Hhere = 0.0;
-        for(var j=0;j<N;j++) {
+        for(var j=0;j<N;++j) {
           var pj = prow[j] / psum;
           prow[j] = pj;
           if(pj > 1e-7) Hhere -= pj * Math.log(pj);
@@ -158,16 +158,17 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
       // console.log('data point ' + i + ' gets precision ' + beta + ' after ' + num + ' binary search steps.');
       // copy over the final prow to P at row i
-      for(var j=0;j<N;j++) { P[i*N+j] = prow[j]; }
+      for(var j=0;j<N;++j) { P[i*N+j] = prow[j]; }
 
     } // end loop over examples i
 
     // symmetrize P and normalize it to sum to 1 over all ij
     var Pout = zeros(N * N);
     var N2 = N*2;
-    for(var i=0;i<N;i++) {
-      for(var j=0;j<N;j++) {
-        Pout[i*N+j] = Math.max((P[i*N+j] + P[j*N+i])/N2, 1e-100);
+    for(var i=0;i<N;++i) {
+      for(var j=0;j<N;++j) {
+        let index = i*N+j;
+        Pout[index] = Math.max((P[index] + P[j*N+i])/N2, 1e-100);
       }
     }
 
@@ -209,8 +210,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       assert(N > 0, " X is empty? You must have some data!");
       // convert D to a (fast) typed array version
       var dists = zeros(N * N); // allocate contiguous array
-      for(var i=0;i<N;i++) {
-        for(var j=i+1;j<N;j++) {
+      for(var i=0;i<N;++i) {
+        for(var j=i+1;j<N;++j) {
           var d = D[i][j];
           dists[i*N+j] = d;
           dists[j*N+i] = d;
@@ -246,8 +247,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
       // perform gradient step
       var ymean = zeros(this.dim);
-      for(var i=0;i<N;i++) {
-        for(var d=0;d<this.dim;d++) {
+      for(var i=0;i<N;++i) {
+        for(var d=0;d<this.dim; ++d) {
           var gid = grad[i][d];
           var sid = this.ystep[i][d];
           var gainid = this.gains[i][d];
@@ -263,20 +264,19 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
           this.ystep[i][d] = newsid; // remember the step we took
 
           // step!
-          this.Y[i][d] += newsid; 
+          this.Y[i][d] += newsid;
 
           ymean[d] += this.Y[i][d]; // accumulate mean so that we can center later
         }
       }
 
       // reproject Y to be zero mean
-      for(var i=0;i<N;i++) {
-        for(var d=0;d<this.dim;d++) {
+      for(var i=0;i<N;++i) {
+        for(var d=0;d<this.dim;++d) {
           this.Y[i][d] -= ymean[d]/N;
         }
       }
 
-      //if(this.iter%100===0) console.log('iter ' + this.iter + ', cost: ' + cost);
       return cost; // return current cost
     },
 
@@ -289,8 +289,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       var grad = cg.grad;
 
       var e = 1e-5;
-      for(var i=0;i<N;i++) {
-        for(var d=0;d<this.dim;d++) {
+      for(var i=0;i<N;++i) {
+        for(var d=0;d<this.dim;++d) {
           var yold = this.Y[i][d];
 
           this.Y[i][d] = yold + e;
@@ -298,7 +298,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
           this.Y[i][d] = yold - e;
           var cg1 = this.costGrad(this.Y);
-          
+
           var analytic = grad[i][d];
           var numerical = (cg0.cost - cg1.cost) / ( 2 * e );
           console.log(i + ',' + d + ': gradcheck analytic: ' + analytic + ' vs. numerical: ' + numerical);
@@ -319,10 +319,10 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       // compute current Q distribution, unnormalized first
       var Qu = zeros(N * N);
       var qsum = 0.0;
-      for(var i=0;i<N;i++) {
-        for(var j=i+1;j<N;j++) {
+      for(var i=0;i<N;++i) {
+        for(var j=i+1;j<N;++j) {
           var dsum = 0.0;
-          for(var d=0;d<dim;d++) {
+          for(var d=0;d<dim;++d) {
             var dhere = Y[i][d] - Y[j][d];
             dsum += dhere * dhere;
           }
@@ -332,24 +332,22 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
           qsum += 2 * qu;
         }
       }
-      // normalize Q distribution to sum to 1
-      var NN = N*N;
-      var Q = zeros(NN);
-      for(var q=0;q<NN;q++) { Q[q] = Math.max(Qu[q] / qsum, 1e-100); }
-
       var cost = 0.0;
-      var grad = [];
-      for(var i=0;i<N;i++) {
-        var gsum = new Array(dim); // init grad for point i
-        for(var d=0;d<dim;d++) { gsum[d] = 0.0; }
-        for(var j=0;j<N;j++) {
-          cost += - P[i*N+j] * Math.log(Q[i*N+j]); // accumulate cost (the non-constant portion at least...)
-          var premult = 4 * (pmul * P[i*N+j] - Q[i*N+j]) * Qu[i*N+j];
-          for(var d=0;d<dim;d++) {
+      var grad = zeros(N);
+      for(var i=0;i<N;++i) {
+        var gsum = zeros(dim); // init grad for point i
+        for(var j=0;j<N;++j) {
+          var index = i*N+j;
+          var quValue = Qu[index];
+          var normedProb = Math.max(quValue / qsum, 1e-100);
+          var pValue = P[index];
+          cost += - pValue * Math.log(normedProb); // accumulate cost (the non-constant portion at least...)
+          var premult = 4 * (pmul * pValue - normedProb) * quValue;
+          for(var d=0;d<dim;++d) {
             gsum[d] += premult * (Y[i][d] - Y[j][d]);
           }
         }
-        grad.push(gsum);
+        grad[i] = gsum;
       }
 
       return {cost: cost, grad: grad};
