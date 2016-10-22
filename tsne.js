@@ -130,7 +130,11 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
         // normalize p and compute entropy
         var Hhere = 0.0;
         for(var j=0;j<N;j++) {
-          var pj = prow[j] / psum;
+          if(psum == 0) {
+             var pj = 0;
+          } else {
+             var pj = prow[j] / psum;
+          }
           prow[j] = pj;
           if(pj > 1e-7) Hhere -= pj * Math.log(pj);
         }
