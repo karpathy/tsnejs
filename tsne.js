@@ -83,13 +83,15 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
     return d;
   }
 
-  // compute pairwise distance in all vectors in X
-  var xtod = function(X) {
+  // compute pairwise distance in all vectors in X with optionally-configurable distance metric
+  var xtod = function(X, metric) {
+    // L2 stays the default distance metric
+    metric = metric || L2
     var N = X.length;
     var dist = zeros(N * N); // allocate contiguous array
     for(var i=0;i<N;i++) {
       for(var j=i+1;j<N;j++) {
-        var d = L2(X[i], X[j]);
+        var d = metric(X[i], X[j]);
         dist[i*N+j] = d;
         dist[j*N+i] = d;
       }
@@ -194,12 +196,13 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
     // this function takes a set of high-dimensional points
     // and creates matrix P from them using gaussian kernel
-    initDataRaw: function(X) {
+    initDataRaw: function(X, metric) {
       var N = X.length;
       var D = X[0].length;
       assert(N > 0, " X is empty? You must have some data!");
       assert(D > 0, " X[0] is empty? Where is the data?");
-      var dists = xtod(X); // convert X to distances using gaussian kernel
+      assert(typeof metric === "function" || !metric, "If your distance metric isn't a functon you might as well not have one!")
+      var dists = xtod(X, metric); // convert X to distances using gaussian kernel
       this.P = d2p(dists, this.perplexity, 1e-4); // attach to object
       this.N = N; // back up the size of the dataset
       this.initSolution(); // refresh this

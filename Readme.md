@@ -43,7 +43,7 @@ for(var k = 0; k < 500; k++) {
 var Y = tsne.getSolution(); // Y is an array of 2-D points that you can plot
 ```
 
-The data can be passed to tSNEJS as a set of high-dimensional points using the `tsne.initDataRaw(X)` function, where X is an array of arrays (high-dimensional points that need to be embedded). The algorithm computes the Gaussian kernel over these points and then finds the appropriate embedding.
+The data can be passed to tSNEJS as a set of high-dimensional points using the `tsne.initDataRaw(X)` function, where X is an array of arrays (high-dimensional points that need to be embedded). The algorithm computes the Gaussian kernel over these points and then finds the appropriate embedding. `initDataRaw` also accepts an optional `metric` input `tsne.initDataRaw(X, metric)` that will define a custom distance metric to use in place of the default of `L2`. Make sure the function you pass in takes two vectors as inputs and returns a single distance metric as a response.
 
 ## Web Demos
 There are two web interfaces to this library that we are aware of:
