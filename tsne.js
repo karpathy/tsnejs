@@ -18,6 +18,14 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
     }
   }
 
+  // helper function, map upper triangle index to one dimension array index
+  function idx(i, j, n) {
+    if (j >= i) {
+      return (n + n - (i - 1)) * i / 2 + (j - i);
+    }
+    return idx(j, i, n);
+  }
+
   // return 0 mean unit standard deviation random number
   var return_v = false;
   var v_val = 0.0;
@@ -86,24 +94,20 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
   // compute pairwise distance in all vectors in X
   var xtod = function(X) {
     var N = X.length;
-    var dist = zeros(N * N); // allocate contiguous array
+    var dist = zeros(N * (N+1) / 2); // allocate contiguous array
     for(var i=0;i<N;i++) {
       for(var j=i+1;j<N;j++) {
         var d = L2(X[i], X[j]);
-        dist[i*N+j] = d;
-        dist[j*N+i] = d;
+        dist[idx(i, j, N)] = d;
       }
     }
     return dist;
   }
 
   // compute (p_{i|j} + p_{j|i})/(2n)
-  var d2p = function(D, perplexity, tol) {
-    var Nf = Math.sqrt(D.length); // this better be an integer
-    var N = Math.floor(Nf);
-    assert(N === Nf, "D should have square number of elements.");
+  var d2p = function(D, perplexity, tol, N) {
     var Htarget = Math.log(perplexity); // target entropy of distribution
-    var P = zeros(N * N); // temporary probability matrix
+    var P = zeros(N * (N + 1) / 2) // temporary probability matrix
 
     var prow = zeros(N); // a temporary storage compartment
     for(var i=0;i<N;i++) {
@@ -122,7 +126,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
         // compute entropy and kernel row with beta precision
         var psum = 0.0;
         for(var j=0;j<N;j++) {
-          var pj = Math.exp(- D[i*N+j] * beta);
+          var pj = Math.exp(- D[idx(i, j, N)] * beta);
           if(i===j) { pj = 0; } // we dont care about diagonals
           prow[j] = pj;
           psum += pj;
@@ -162,20 +166,21 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
 
       // console.log('data point ' + i + ' gets precision ' + beta + ' after ' + num + ' binary search steps.');
       // copy over the final prow to P at row i
-      for(var j=0;j<N;j++) { P[i*N+j] = prow[j]; }
+      for(var j=0;j<N;j++) {
+          P[idx(i, j, N)] += prow[j];
+      }
 
     } // end loop over examples i
 
     // symmetrize P and normalize it to sum to 1 over all ij
-    var Pout = zeros(N * N);
     var N2 = N*2;
     for(var i=0;i<N;i++) {
-      for(var j=0;j<N;j++) {
-        Pout[i*N+j] = Math.max((P[i*N+j] + P[j*N+i])/N2, 1e-100);
+      for(var j=i+1;j<N;j++) {
+          var p2 = P[idx(i, j, N)];
+          P[idx(i, j, N)] = Math.max(p2/N2, 1e-100)
       }
     }
-
-    return Pout;
+    return P;
   }
 
   // helper function
@@ -200,8 +205,8 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       assert(N > 0, " X is empty? You must have some data!");
       assert(D > 0, " X[0] is empty? Where is the data?");
       var dists = xtod(X); // convert X to distances using gaussian kernel
-      this.P = d2p(dists, this.perplexity, 1e-4); // attach to object
       this.N = N; // back up the size of the dataset
+      this.P = d2p(dists, this.perplexity, 1e-4, N); // attach to object
       this.initSolution(); // refresh this
     },
 
@@ -212,16 +217,15 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       var N = D.length;
       assert(N > 0, " X is empty? You must have some data!");
       // convert D to a (fast) typed array version
-      var dists = zeros(N * N); // allocate contiguous array
+      var dists = zeros(N * (N+1) / 2); // allocate contiguous array
       for(var i=0;i<N;i++) {
         for(var j=i+1;j<N;j++) {
           var d = D[i][j];
-          dists[i*N+j] = d;
-          dists[j*N+i] = d;
+          dists[idx(i, j, N)] = d;
         }
       }
-      this.P = d2p(dists, this.perplexity, 1e-4);
       this.N = N;
+      this.P = d2p(dists, this.perplexity, 1e-4, N);
       this.initSolution(); // refresh this
     },
 
@@ -321,7 +325,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
       var pmul = this.iter < 100 ? 4 : 1; // trick that helps with local optima
 
       // compute current Q distribution, unnormalized first
-      var Qu = zeros(N * N);
+      var Qu = zeros(N * (N+1) / 2);
       var qsum = 0.0;
       for(var i=0;i<N;i++) {
         for(var j=i+1;j<N;j++) {
@@ -331,15 +335,10 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
             dsum += dhere * dhere;
           }
           var qu = 1.0 / (1.0 + dsum); // Student t-distribution
-          Qu[i*N+j] = qu;
-          Qu[j*N+i] = qu;
+          Qu[idx(i, j, N)] = qu;
           qsum += 2 * qu;
         }
       }
-      // normalize Q distribution to sum to 1
-      var NN = N*N;
-      var Q = zeros(NN);
-      for(var q=0;q<NN;q++) { Q[q] = Math.max(Qu[q] / qsum, 1e-100); }
 
       var cost = 0.0;
       var grad = [];
@@ -347,8 +346,10 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
         var gsum = new Array(dim); // init grad for point i
         for(var d=0;d<dim;d++) { gsum[d] = 0.0; }
         for(var j=0;j<N;j++) {
-          cost += - P[i*N+j] * Math.log(Q[i*N+j]); // accumulate cost (the non-constant portion at least...)
-          var premult = 4 * (pmul * P[i*N+j] - Q[i*N+j]) * Qu[i*N+j];
+          var qu = Qu[idx(i, j, N)];
+          var q = Math.max(qu / qsum, 1e-100);
+          cost += - P[idx(i, j, N)] * Math.log(q); // accumulate cost (the non-constant portion at least...)
+          var premult = 4 * (pmul * P[idx(i, j, N)] - q) * qu;
           for(var d=0;d<dim;d++) {
             gsum[d] += premult * (Y[i][d] - Y[j][d]);
           }
