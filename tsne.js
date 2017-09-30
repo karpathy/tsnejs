@@ -347,7 +347,7 @@ var tsnejs = tsnejs || { REVISION: 'ALPHA' };
         var gsum = new Array(dim); // init grad for point i
         for(var d=0;d<dim;d++) { gsum[d] = 0.0; }
         for(var j=0;j<N;j++) {
-          cost += - P[i*N+j] * Math.log(Q[i*N+j]); // accumulate cost (the non-constant portion at least...)
+          cost += P[i*N+j] * Math.log(P[i*N+j] / Q[i*N+j]); // accumulate cost (the non-constant portion at least...)
           var premult = 4 * (pmul * P[i*N+j] - Q[i*N+j]) * Qu[i*N+j];
           for(var d=0;d<dim;d++) {
             gsum[d] += premult * (Y[i][d] - Y[j][d]);
